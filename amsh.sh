@@ -7,14 +7,15 @@ log_event() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$log_file"
 }
 check_log(){
-    if [ ! -f "$log_file"]; then
-    touch "$log_file"
+    if [ ! -f "$log_file" ]; then
+        touch "$log_file"
     fi
-    if [ ! -w "$log_file"]; then
-    echo "ERROR: lipsa permisiune de scriere!"
-    exit 
+    if [ ! -w "$log_file" ]; then
+        echo "ERROR: lipsa permisiune de scriere!"
+        exit 1
     fi
 }
+
 
 check_config() {
     local target_dir="$1"
@@ -28,6 +29,12 @@ check_config() {
     else
        return 1
     fi
+}
+cronos(){
+    local dir="$1"
+    local timp_curent=$(echo "$dir" | tr '/' '_')
+    touch "/tmp/last_access${timp_curent}"
+    log_event "TIMESTAMP ACTUALIZAT: $dir"
 }
 
 echo "Automounter Shell pornit."
