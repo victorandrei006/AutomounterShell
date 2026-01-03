@@ -12,7 +12,7 @@ check_log(){
     fi
     if [ ! -w "$log_file"]; then
     echo "ERROR: lipsa permisiune de scriere!"
-    exit 1
+    exit 
     fi
 }
 
@@ -35,7 +35,6 @@ log_event "Shell-ul a fost pornit de $USER."
 
 while true; do
     printf ">"
-    echo "1"
     read -r comanda
     [ "$comanda" == "exit" ] && break
     [ "$comanda" == "q" ] && break
