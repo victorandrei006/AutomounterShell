@@ -6,16 +6,21 @@ log_event() {
     local message="$1"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$log_file"
 }
+
+on_exit() {
+    log_event "Shell-ul se inchide."
+    exit 0
+}
+
 check_log(){
     if [ ! -f "$log_file" ]; then
         touch "$log_file"
     fi
     if [ ! -w "$log_file" ]; then
-        echo "ERROR: lipsa permisiune de scriere!"
+        echo "Eroare: lipsa permisiune de scriere!"
         exit 1
     fi
 }
-
 
 check_config() {
     local target_dir="$1"
@@ -35,14 +40,14 @@ cronos(){
     local dir="$1"
     local timp_curent=$(echo "$dir" | tr '/' '_')
     touch "/tmp/last_access${timp_curent}"
-    log_event "TIMESTAMP ACTUALIZAT: $dir"
+    log_event "Timestamp actualizat: $dir"
 }
 
 echo "Automounter Shell pornit."
 log_event "Shell-ul a fost pornit de $USER."
 
 while true; do
-    printf "> "
+    printf ">"
     read -r linie
     
     [ -z "$linie" ] && continue
@@ -53,19 +58,31 @@ while true; do
 
     if [ "$comanda" == "cd" ]; then
         if [ "$argumente" == "cd" ] || [ -z "$argumente" ]; then
-            tinta=$HOME
+            target=$HOME
         else
-            tinta=$argumente
+            target=$argumente
         fi
 
-        if check_config "$tinta"; then
-            echo "Director special detectat. Se marcheaza accesul."
-            cronos "$tinta"
-        fi
+        if check_config "$target"; then
+            dispozitiv=$(grep -w "^$target" "$config" | awk '{print $2}')
 
-        builtin cd "$tinta" 2>/dev/null
+            if ! mountpoint -q "$target"; then
+                echo "Se montează $dispozitiv pe $target"
+                sudo mount "$dispozitiv" "$target"
+                if [ $? -eq 0 ]; then
+                    log_event "$dispozitiv a fost montat pe $target"
+                else
+                    log_event "Eroare: $dispozitiv nu a putut fi montat pe $target"
+                fi
+            fi
+            cronos "$target"
+        fi
+  
+    #odata ce scrii "cd" o sa dea mount la ce e in fisierul mnt.conf
+
+        builtin cd "$target" 2>/dev/null
         if [ $? -ne 0 ]; then
-            echo "Eroare: Directorul '$tinta' nu exista."
+            echo "Eroare: Directorul '$target' nu exista."
         fi
     else
         $linie
