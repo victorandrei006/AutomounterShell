@@ -30,6 +30,7 @@ check_config() {
        return 1
     fi
 }
+
 cronos(){
     local dir="$1"
     local timp_curent=$(echo "$dir" | tr '/' '_')
@@ -41,10 +42,32 @@ echo "Automounter Shell pornit."
 log_event "Shell-ul a fost pornit de $USER."
 
 while true; do
-    printf ">"
-    read -r comanda
-    [ "$comanda" == "exit" ] && break
-    [ "$comanda" == "q" ] && break
-    [ "$comanda" == "done" ] && break
-    $comanda
+    printf "> "
+    read -r linie
+    
+    [ -z "$linie" ] && continue
+    [ "$linie" == "exit" ] && break
+
+    comanda=$(echo "$linie" | awk '{print $1}')
+    argumente=$(echo "$linie" | cut -d' ' -f2-)
+
+    if [ "$comanda" == "cd" ]; then
+        if [ "$argumente" == "cd" ] || [ -z "$argumente" ]; then
+            tinta=$HOME
+        else
+            tinta=$argumente
+        fi
+
+        if check_config "$tinta"; then
+            echo "Director special detectat. Se marcheaza accesul."
+            cronos "$tinta"
+        fi
+
+        builtin cd "$tinta" 2>/dev/null
+        if [ $? -ne 0 ]; then
+            echo "Eroare: Directorul '$tinta' nu exista."
+        fi
+    else
+        $linie
+    fi
 done
