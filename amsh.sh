@@ -2,9 +2,6 @@
 config="mnt.conf"
 log_file="$HOME/amsh.log"
 
-check_log
-trap on_exit EXIT SIGINT SIGTERM
-
 log_event() {
     local message="$1"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$log_file"
@@ -49,12 +46,16 @@ cronos(){
 echo "Automounter Shell pornit."
 log_event "Shell-ul a fost pornit de $USER."
 
+check_log
+trap on_exit EXIT SIGINT SIGTERM
+
 while true; do
     printf ">"
     read -r linie
     
     [ -z "$linie" ] && continue
     [ "$linie" == "exit" ] && break
+    [ "$linie" == "q" ] && break
 
     comanda=$(echo "$linie" | awk '{print $1}')
     argumente=$(echo "$linie" | cut -d' ' -f2-)
@@ -68,9 +69,10 @@ while true; do
         
         if builtin cd "$target" 2>/dev/null; then
             target_abs=$(pwd)
+            echo "Debug: Caut '$target_abs' in $config"
 
             if check_config "$target_abs"; then
-                dispozitiv=$(grep -w "^$target_abs" "$config" | awk '{print $2}')
+                dispozitiv=$(grep -F "^$target_abs" "$config" | awk '{print $2}')
 
                 if ! mountpoint -q "$target_abs"; then
                     echo "Se montează $dispozitiv pe $target_abs"
