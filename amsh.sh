@@ -1,6 +1,6 @@
 #!/bin/bash
 config="mnt.conf"
-log_file="$HOME/amsh.log"
+log_file="$HOME/.amsh/amsh.log"
 
 # Scrie mesaje in fisierul de log cu data si ora curenta
 log_event() {
@@ -14,10 +14,14 @@ on_exit() {
 }
 
 check_log(){
-    [ ! -f "$log_file" ] && touch "$log_file"
-    if [ ! -w "$log_file" ]; then
+log_dir=$(dirname "$log_file")
+if [ ! -d "$log_dir" ]; then
+    mkdir -p "$log_dir"        # Creez folderul ascuns daca nu exista
+fi
+[ ! -f "$log_file" ] && touch "$log_file"    
+if [ ! -w "$log_file" ]; then
         echo "Eroare: lipsa permisiune de scriere!"
-        exit 1
+        exit 
     fi
 }
 
