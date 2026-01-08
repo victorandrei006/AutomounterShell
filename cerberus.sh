@@ -1,5 +1,5 @@
 #!/bin/bash
-TIMEOUT=10
+TIMEOUT=300
 
 while true; do
     for f in /tmp/last_access*; do
