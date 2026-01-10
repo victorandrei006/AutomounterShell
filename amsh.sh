@@ -1,5 +1,6 @@
 #!/bin/bash
-config="mnt.conf"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+config="$SCRIPT_DIR/mnt.conf"
 log_file="$HOME/amsh.log"
 
 log_event() {
@@ -22,20 +23,6 @@ check_log(){
     fi
 }
 
-check_config() {
-    local target_dir="$1"
-
-    if [ ! -f "$config" ]; then
-        return 1
-    fi
-
-    if grep -q "$target_dir" "$config"; then
-        return 0
-    else
-       return 1
-    fi
-}
-
 cronos(){
     local dir="$1"
     local timp_curent=$(echo "$dir" | tr '/' '_')
@@ -54,6 +41,7 @@ if [ -x "./cerberus.sh" ]; then
     CERBERUS_PID=$!
     
     log_event "Cerberus pornit in background cu PID: $CERBERUS_PID"
+    echo "Cerberus vegheaza (PID: $CERBERUS_PID)..."
 else
     echo "Eroare: cerberus.sh nu a fost gasit sau nu are permisiuni de executie!"
 fi
@@ -78,33 +66,32 @@ while true; do
             target=$argumente
         fi
         
-        if builtin cd "$target" 2>/dev/null; then
-            target_abs=$(pwd)
-            echo "Debug: Caut '$target_abs' in $config"
+        if [ -d "$target" ]; then
+            target_abs=$(cd "$target" && pwd)
+            
+            dispozitiv=$(awk -v path="$target_abs" '$1 == path {print $2}' "$config")
 
-            if check_config "$target_abs"; then
-                dispozitiv=$(grep -F "$target_abs" "$config" | awk '{print $2}')
-
+            if [ -n "$dispozitiv" ]; then
                 if ! mountpoint -q "$target_abs"; then
-
-                    echo "Se montează $dispozitiv pe $target_abs."
+                    echo "Se montează $dispozitiv pe $target_abs..."
                     sleep 0.5
-                    echo "Se monteaza $dispozitiv pe $target_abs.."
+                    echo "Se montează $dispozitiv pe $target_abs..."
                     sleep 0.5
-                    echo "Se monteaza $dispozitiv pe $target_abs..."
-
+                    echo "Se montează $dispozitiv pe $target_abs..."
                     sudo mount "$dispozitiv" "$target_abs"
+                    
                     if [ $? -eq 0 ]; then
-                        log_event "$dispozitiv a fost montat pe $target_abs"
+                        log_event "Succes: $dispozitiv montat pe $target_abs"
                     else
-                        log_event "Eroare: $dispozitiv nu a putut fi montat pe $target_abs"
+                        log_event "Eroare: Nu s-a putut monta $dispozitiv"
                     fi
                 fi
                 cronos "$target_abs"
             fi
+
+            builtin cd "$target_abs" 2>/dev/null
         else
             echo "Eroare: Directorul '$target' nu exista."
-        
         fi
     else
         eval "$linie"
