@@ -1,7 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 config="$SCRIPT_DIR/mnt.conf"
-log_file="$HOME/amsh.log"
+log_file="$HOME/.amsh/amsh.log"
 
 log_event() {
     local message="$1"
@@ -23,11 +23,11 @@ check_log(){
     fi
 }
 
+monitor_file="/tmp/amsh_monitor"
+
 cronos(){
     local dir="$1"
-    local timp_curent=$(echo "$dir" | tr '/' '_')
-    touch "/tmp/last_access${timp_curent}"
-    log_event "Timestamp actualizat: $dir"
+    echo "$dir" > "$monitor_file"
 }
 
 echo "Automounter Shell pornit."
@@ -35,8 +35,8 @@ log_event "Shell-ul a fost pornit de $USER."
 
 check_log
 
-if [ -x "./cerberus.sh" ]; then
-    ./cerberus.sh > /dev/null 2>&1 &
+if [ -x "$SCRIPT_DIR/cerberus.sh" ]; then
+    "$SCRIPT_DIR/cerberus.sh" "$monitor_file" "$log_file" > /dev/null 2>&1 &
 
     CERBERUS_PID=$!
     
@@ -73,17 +73,19 @@ while true; do
 
             if [ -n "$dispozitiv" ]; then
                 if ! mountpoint -q "$target_abs"; then
-                    echo "Se montează $dispozitiv pe $target_abs..."
+                    echo "Se monteaza $dispozitiv pe $target_abs."
                     sleep 0.5
-                    echo "Se montează $dispozitiv pe $target_abs..."
+                    echo "Se monteaza $dispozitiv pe $target_abs.."
                     sleep 0.5
-                    echo "Se montează $dispozitiv pe $target_abs..."
+                    echo "Se monteaza $dispozitiv pe $target_abs..."
                     sudo mount "$dispozitiv" "$target_abs"
                     
                     if [ $? -eq 0 ]; then
                         log_event "Succes: $dispozitiv montat pe $target_abs"
+                        echo "Succes! $dispozitiv montat pe $target_abs"
                     else
                         log_event "Eroare: Nu s-a putut monta $dispozitiv"
+                        echo "Eroare: Nu s-a putut monta $dispozitiv"
                     fi
                 fi
                 cronos "$target_abs"

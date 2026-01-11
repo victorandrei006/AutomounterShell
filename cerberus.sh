@@ -1,21 +1,44 @@
 #!/bin/bash
+
+MONITOR_FILE="$1"
+LOG_FILE="$2"
 TIMEOUT=300
 
+[ -z "$MONITOR_FILE" ] && MONITOR_FILE="/tmp/amsh_monitor"
+[ -z "$LOG_FILE" ] && LOG_FILE="$HOME/amsh.log"
+
+log_c() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Cerberus] $1" >> "$LOG_FILE"
+}
+
+log_c "Daemon pornit. Monitorizez: $MONITOR_FILE"
+
 while true; do
-    for f in /tmp/last_access*; do
-        [ -e "$f" ] || continue
+    if [ -f "$MONITOR_FILE" ]; then
         
         now=$(date +%s)
-        file_time=$(stat -c %Y "$f")
+        file_time=$(stat -c %Y "$MONITOR_FILE")
         age=$((now - file_time))
 
         if [ $age -ge $TIMEOUT ]; then
-            temp_name="${f#/tmp/last_access}"
-            folder_reconstituit=$(echo "$temp_name" | tr '_' '/')
-
-            sudo umount "$folder_reconstituit"
-            rm "$f"
+            
+            folder_de_demontat=$(cat "$MONITOR_FILE")
+            
+            if [ -n "$folder_de_demontat" ] && mountpoint -q "$folder_de_demontat"; then
+                
+                sudo umount -l "$folder_de_demontat"
+                
+                if [ $? -eq 0 ]; then
+                    log_c "Am demontat automat: $folder_de_demontat"
+                    rm -f "$MONITOR_FILE"
+                else
+                    log_c "Eroare demontare pentru: $folder_de_demontat"
+                fi
+            else
+                rm -f "$MONITOR_FILE"
+            fi
         fi
-    done
-    sleep 5
+    fi
+    
+    sleep 2
 done
