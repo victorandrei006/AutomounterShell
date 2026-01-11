@@ -41,7 +41,6 @@ if [ -x "$SCRIPT_DIR/cerberus.sh" ]; then
     CERBERUS_PID=$!
     
     log_event "Cerberus pornit in background cu PID: $CERBERUS_PID"
-    echo "Cerberus vegheaza (PID: $CERBERUS_PID)..."
 else
     echo "Eroare: cerberus.sh nu a fost gasit sau nu are permisiuni de executie!"
 fi

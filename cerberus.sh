@@ -8,10 +8,10 @@ TIMEOUT=300
 [ -z "$LOG_FILE" ] && LOG_FILE="$HOME/amsh.log"
 
 log_c() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Cerberus] $1" >> "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Cerberus $1" >> "$LOG_FILE"
 }
 
-log_c "Daemon pornit. Monitorizez: $MONITOR_FILE"
+log_c "Cerberus pornit. Monitorizez: $MONITOR_FILE"
 
 while true; do
     if [ -f "$MONITOR_FILE" ]; then
@@ -29,10 +29,10 @@ while true; do
                 sudo umount -l "$folder_de_demontat"
                 
                 if [ $? -eq 0 ]; then
-                    log_c "Am demontat automat: $folder_de_demontat"
+                    log_c "Cerberus a demontat automat: $folder_de_demontat"
                     rm -f "$MONITOR_FILE"
                 else
-                    log_c "Eroare demontare pentru: $folder_de_demontat"
+                    log_c "Eroare la demontare pentru: $folder_de_demontat"
                 fi
             else
                 rm -f "$MONITOR_FILE"
